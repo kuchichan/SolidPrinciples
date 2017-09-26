@@ -2,6 +2,7 @@ using System;
 using System.IO;
 
 namespace InterfaceSegregation
+
 {
     // virtual keywork gives us exstensibility.
     public class FileStore : IStore
