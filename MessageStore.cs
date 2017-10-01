@@ -22,45 +22,38 @@ namespace  InterfaceSegregation
         // Storage
         // Orchestration
         public DirectoryInfo WorkingDirectory { get; private set; }
-        private readonly StoreCache cache;
-        private readonly StoreLogger log;
 
-        private readonly IStore store;
         private readonly IFileLocator fileLocator;
-        
+        private readonly IStoreWriter writer;
+        private readonly IStoreReader reader;
 
-        public MessageStore(DirectoryInfo workingDirectory)
+        public MessageStore(
+            IStoreWriter writer,
+            IStoreReader reader,
+            IFileLocator fileLocator)
         {
-            if (workingDirectory == null)
-                throw new ArgumentNullException("workingDirectory");
-            if (!workingDirectory.Exists)
-                throw new ArgumentException("Boo", "workingDirectory");
-
-            this.WorkingDirectory = workingDirectory;
-            this.cache = new StoreCache();
-            this.log = new StoreLogger();
-            this.store = new FileStore(workingDirectory);
+            // Composite work very well in combination with commands
+            if (writer == null)
+                throw new ArgumentNullException("writer");
+            if (reader == null)
+                throw new ArgumentNullException("reader");
+            if (fileLocator == null)
+                throw new ArgumentNullException("fileLocator");
+            
+            this.fileLocator = fileLocator;
+            this.writer = writer;
+            this.reader = reader;
         }
-
+        // Composite Implementation of Save -> Adding IStoreWriter instance
         public void Save(int id, string message)
         {
-            new LogSavingStoreWriter().Save(id, message);
-                            this.Store.Save(id, message);
-                            this.Cache.Save(id, message);
-             new LogSavedStoreWriter().Save(id, message);
+            this.Writer.Save(id, message);
         }
         
         
         public Maybe<string> Read(int id)
         {
-            this.Log.Reading(id);
-            var message = 
-                this.Cache.GetOrAdd(id, _ => this.Store.ReadAllText(id));
-            if(message.Any())
-                this.Log.Returning(id);
-            else
-                this.Log.DidNotFind(id);
-            return message;
+            return this.reader.Read(id);
         }
 
         public FileInfo GetFileInfo(int id)
@@ -70,25 +63,19 @@ namespace  InterfaceSegregation
 
         // Factory properties
 
-        protected virtual IStore Store
-        {
-            get {return this.store; }
-        }
-
-        protected virtual IStoreCache Cache
-        {
-            get { return this.cache; }
-        }
-
-        protected virtual IStoreLogger Log
-        {
-            get {return this.log ; }
-        }
-
         protected virtual IFileLocator FileLocator 
         {
             get {return this.fileLocator;}
         }
 
+        protected virtual IStoreWriter Writer
+        {
+            get { return this.writer;}
+        }
+
+        protected virtual IStoreReader Reader
+        {
+            get { return this.reader;}
+        }
     }
 }

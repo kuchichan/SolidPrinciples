@@ -4,25 +4,38 @@ using System.Linq;
 
 namespace InterfaceSegregation
 {
-    public class StoreCache : IStoreCache
+    public class StoreCache : IStoreWriter, IStoreCache, IStoreReader
     {
         private readonly ConcurrentDictionary<int,Maybe<string>> cache;
+        private readonly IStoreWriter writer;
+        private readonly IStoreReader reader;
 
-        public  StoreCache()
+        public  StoreCache(IStoreWriter writer,IStoreReader reader)
         {
             this.cache = new ConcurrentDictionary<int, Maybe<string>>();
+            this.writer = writer;
+            this.reader = reader;
         }
 
-        public virtual void Save(int id, string message)
+        public void Save(int id, string message)
 
         {
+            this.writer.Save(id, message);
             var m = new Maybe<string>(message);
             this.cache.AddOrUpdate(id, m, (i, s) => m);
         }
 
-        public virtual Maybe<string> GetOrAdd(int id, Func<int, Maybe<string>> messageFactory)
+        public Maybe<string> Read(int id)
         {
-            return this.cache.GetOrAdd(id, messageFactory);
+            Maybe<string> retVal;
+            if (this.cache.TryGetValue(id, out retVal))
+                return retVal;
+            
+            retVal = this.reader.Read(id);
+            if(retVal.Any())
+                this.cache.AddOrUpdate(id, retVal, (i, s) => retVal);
+            
+            return retVal;
         }
 
     }

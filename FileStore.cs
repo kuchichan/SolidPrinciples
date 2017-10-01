@@ -5,7 +5,7 @@ namespace InterfaceSegregation
 
 {
     // virtual keywork gives us exstensibility.
-    public class FileStore : IStore
+    public class FileStore : IStore, IStoreWriter, IFileLocator, IStoreReader
     {
         private readonly DirectoryInfo workingDirectory;
 
@@ -19,12 +19,12 @@ namespace InterfaceSegregation
             this.workingDirectory = workingDirectory;
             
         }
-        public virtual void Save(int id, string message)
+        public  void Save(int id, string message)
         {
             var path = this.GetFileInfo(id).FullName;
             File.WriteAllText(path, message);
         }
-        public virtual Maybe<string> ReadAllText(int id)
+        public  Maybe<string> Read(int id)
         {  
             var file = this.GetFileInfo(id);
             if(!file.Exists)
@@ -34,7 +34,7 @@ namespace InterfaceSegregation
             var path = this.GetFileInfo(id).FullName;
             return new Maybe<string>(File.ReadAllText(path));
         }
-        public virtual FileInfo GetFileInfo(int id)
+        public  FileInfo GetFileInfo(int id)
         {
             return new FileInfo(Path.Combine(this.workingDirectory.FullName, id + ".txt"));
         }

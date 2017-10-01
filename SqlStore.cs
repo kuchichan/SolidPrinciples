@@ -10,7 +10,7 @@ namespace InterfaceSegregation
            // Wrte to database here 
         }
 
-        public  Maybe<string> ReadAllText(int id)
+        public  Maybe<string> Read(int id)
         {
             throw new NotImplementedException();
         }
